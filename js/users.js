@@ -35,7 +35,6 @@ function createNavbarItem(title, linkId, mono=false) {
 }
 
 
-
 async function getAccountBalance() {
     await window.ethereum.request({ method: 'eth_requestAccounts' });
     
@@ -47,15 +46,21 @@ async function getAccountBalance() {
     let req = await fetch("https://api.x.immutable.com/v2/balances/" + address);
     let balanceJSON = await req.json();
 
+    document.getElementById("connection-btn").remove();
+
+    let userSubstr = address.substring(0, 6) + ".." + address.substring(address.length - 4);
+    let user = createNavbarItem(userSubstr, "show-balance", true);
+
+    let balance = document.getElementById("balance-collapse");
+    user.addEventListener("click", function () {
+        new bootstrap.Collapse(balance);
+    });
+
+    navbar.appendChild(user);
+
+    let balanceObj = document.getElementById("balance-info");
+
     if (balanceJSON.result.length > 0) {
-        document.getElementById("connection-btn").remove();
-
-        let userSubstr = address.substring(0, 6) + ".." + address.substring(address.length - 4);
-        let user = createNavbarItem(userSubstr, "show-balance", true);
-
-        let balance = document.getElementById("balance-collapse");
-        let balanceObj = document.getElementById("balance-info");
-
         balanceJSON.result.forEach(function (b) {
             let newBalance = document.createElement("p");
             newBalance.className = "m-0 font-monospace";
@@ -72,12 +77,10 @@ async function getAccountBalance() {
 
             balanceObj.appendChild(newBalance);
         });
-
-        user.addEventListener("click", function () {
-            new bootstrap.Collapse(balance);
-        });
-
-        navbar.appendChild(user);
+    } else {
+        let newBalance = document.createElement("p");
+        newBalance.className = "m-0 font-monospace";
+        newBalance.textContent = "no balance :(";
+        balanceObj.appendChild(newBalance);
     }
-    
 }
