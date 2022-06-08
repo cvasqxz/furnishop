@@ -14,24 +14,26 @@ if (window.ethereum) {
 }
 
 
-function createNavbarItem(title, linkId, mono=false) {
+function createNavbarItem(title, linkId) {
     let list = document.createElement("li");
     list.className = "nav-item";
     list.id = linkId;
 
     let link = document.createElement("a");
-
-    if (mono) {
-        link.className = "nav-link font-monospace";
-    } else {
-        link.className = "nav-link";
-    }
+    link.className = "nav-link font-monospace active";
 
     link.href = "#";
     link.textContent = title;
 
     list.appendChild(link);
     return list;
+}
+
+function createBalanceTitle(title) {
+    let balanceTitle = document.createElement("p");
+    balanceTitle.className = "font-monospace text-decoration-underline fs-6";
+    balanceTitle.textContent = title;
+    return balanceTitle;
 }
 
 
@@ -49,16 +51,32 @@ async function getAccountBalance() {
     document.getElementById("connection-btn").remove();
 
     let userSubstr = address.substring(0, 6) + ".." + address.substring(address.length - 4);
-    let user = createNavbarItem(userSubstr, "show-balance", true);
+    let userText = createNavbarItem(userSubstr, "show-balance");
 
     let balance = document.getElementById("balance-collapse");
-    user.addEventListener("click", function () {
+    userText.addEventListener("click", function () {
         new bootstrap.Collapse(balance);
     });
 
-    navbar.appendChild(user);
+    navbar.appendChild(userText);
 
     let balanceObj = document.getElementById("balance-info");
+
+    let ethTitle = createBalanceTitle("ethereum");
+    balanceObj.appendChild(ethTitle);
+
+    let ethBalance = await web3.eth.getBalance(address);
+
+    let newBalance = document.createElement("p");
+    newBalance.className = "m-0 font-monospace";
+    newBalance.innerHTML = "<b>&nbsp;ETH</b>: " + Number((ethBalance / 1e18).toFixed(6));
+    balanceObj.appendChild(newBalance);
+
+    let balanceDivisor = document.createElement("br");
+    balanceObj.appendChild(balanceDivisor);
+
+    let imxTitle = createBalanceTitle("immutable-x");
+    balanceObj.appendChild(imxTitle);
 
     if (balanceJSON.result.length > 0) {
         balanceJSON.result.forEach(function (b) {
@@ -67,7 +85,7 @@ async function getAccountBalance() {
 
             switch (b.symbol) {
                 case "ETH":
-                    newBalance.innerHTML = "<b>" + b.symbol + "</b>: " + Number((b.balance / 1e18).toFixed(6));
+                    newBalance.innerHTML = "<b>&nbsp;" + b.symbol + "</b>: " + Number((b.balance / 1e18).toFixed(6));
                     break;
 
                 case "USDC":
@@ -77,10 +95,5 @@ async function getAccountBalance() {
 
             balanceObj.appendChild(newBalance);
         });
-    } else {
-        let newBalance = document.createElement("p");
-        newBalance.className = "m-0 font-monospace";
-        newBalance.textContent = "no balance :(";
-        balanceObj.appendChild(newBalance);
     }
 }
